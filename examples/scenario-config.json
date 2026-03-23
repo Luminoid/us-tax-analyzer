@@ -16,6 +16,8 @@
       "loan_origination_date": "2023-06-01",
       "medicare_wages": 250000,
       "withholding": 45000,
+      "state_withholding": 15000,
+      "state_code": "CA",
       "year": 2025
     },
     {
@@ -33,6 +35,8 @@
       "loan_origination_date": "2023-06-01",
       "medicare_wages": 150000,
       "withholding": 28000,
+      "state_withholding": 9000,
+      "state_code": "CA",
       "year": 2025
     },
     {
@@ -50,6 +54,8 @@
       "loan_origination_date": "2023-06-01",
       "medicare_wages": 100000,
       "withholding": 17000,
+      "state_withholding": 6000,
+      "state_code": "CA",
       "year": 2025
     }
   ]

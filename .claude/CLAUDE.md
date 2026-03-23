@@ -1,4 +1,4 @@
-# US Tax Advisor — Claude Code Guide
+# US Tax Analyzer — Claude Code Guide
 
 ## Purpose
 
@@ -6,8 +6,12 @@ General-purpose US tax analysis toolkit. Claude Code skill handles conversation 
 
 ## Architecture
 
-- **Skill** (`skills/tax-analysis.md`): Orchestrates analysis — asks user questions, reads documents, calls scripts, presents results
+- **Skill** (`skills/tax-analyzer.md`): Orchestrates analysis — reads documents first, auto-extracts data, asks only missing questions, calls scripts, presents results
 - **Scripts** (`scripts/`): Stateless calculators — numbers in, numbers out. No user interaction.
+  - `federal.py` — Federal tax brackets, QD/LTCG rates, Medicare, NIIT
+  - `state.py` — State income tax (37 states + DC + NYC local)
+  - `deductions.py` — SALT cap, mortgage limits, itemized vs standard
+  - `compare.py` — Multi-scenario comparison (federal + state)
 - **Docs** (`docs/`): Reference material for tax rules, strategies, and common mistakes
 
 ## Key Rules
@@ -31,6 +35,7 @@ General-purpose US tax analysis toolkit. Claude Code skill handles conversation 
 ## Adding New Tax Years
 
 Update these constants in the scripts:
-- `BRACKETS` and `QD_BRACKETS` in `brackets.py`
+- `BRACKETS` and `QD_BRACKETS` in `federal.py`
 - `SALT_CAP` and `STANDARD_DEDUCTION` in `deductions.py`
+- State brackets in `state.py` (PROGRESSIVE_BRACKETS, FLAT_RATE, STATE_STANDARD_DEDUCTION)
 - Verify thresholds for Additional Medicare Tax and NIIT

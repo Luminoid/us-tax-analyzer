@@ -10,8 +10,9 @@ import argparse
 import json
 import sys
 
-from brackets import calculate_full_tax
+from federal import calculate_full_tax
 from deductions import calculate_itemized_deductions, compare_standard_vs_itemized
+from state import calculate_state_tax, get_state_standard_deduction
 
 
 def build_scenario(
@@ -37,6 +38,9 @@ def build_scenario(
     medicare_wages=0,
     fdap_tax=0,
     withholding=0,
+    state_withholding=0,
+    state_code="",
+    nyc_resident=False,
     year=2025,
     **kwargs,
 ):
@@ -110,14 +114,33 @@ def build_scenario(
         is_nra=is_nra,
     )
 
-    total_tax = tax_result["total_tax"] + fdap_tax
-    result = withholding - total_tax
+    federal_tax = tax_result["total_tax"] + fdap_tax
+
+    # State tax calculation
+    state_result = None
+    state_tax_amount = 0
+    if state_code:
+        state_std = get_state_standard_deduction(state_code, status)
+        state_taxable = max(0, agi - state_std) if state_std > 0 else max(0, agi)
+        state_result = calculate_state_tax(
+            state=state_code,
+            taxable_income=state_taxable,
+            status=status,
+            year=year,
+            nyc_resident=nyc_resident,
+        )
+        state_tax_amount = state_result["total_tax"]
+
+    total_tax = federal_tax + state_tax_amount
+    total_withholding = withholding + state_withholding
+    result = total_withholding - total_tax
 
     return {
         "name": name,
         "status": status,
         "is_nra": is_nra,
         "year": year,
+        "state_code": state_code,
         "income": {
             "wages": round(wages),
             "treaty_exemption": round(treaty_exemption),
@@ -134,8 +157,13 @@ def build_scenario(
         "taxable_income": round(taxable_income),
         "tax": tax_result,
         "fdap_tax": round(fdap_tax),
+        "federal_tax": round(federal_tax),
+        "state_tax": state_result,
+        "state_tax_amount": round(state_tax_amount),
         "total_tax": round(total_tax),
         "withholding": round(withholding),
+        "state_withholding": round(state_withholding),
+        "total_withholding": round(total_withholding),
         "result": round(result),
         "result_label": "REFUND" if result >= 0 else "OWED",
     }
@@ -212,7 +240,7 @@ def print_comparison(comparison):
     row("Deduction type", lambda s: s["deduction_comparison"]["recommended"].upper())
     row("Total deduction", lambda s: s["deduction_comparison"]["deduction"])
 
-    print("\nTAX")
+    print("\nFEDERAL TAX")
     row("Taxable income", lambda s: s["taxable_income"])
     row("Income tax", lambda s: s["tax"]["ordinary_tax"]["tax"] + s["tax"]["qd_tax"]["tax"])
     if any(s["tax"]["additional_medicare"]["tax"] for s in scenarios):
@@ -221,10 +249,21 @@ def print_comparison(comparison):
         row("NIIT", lambda s: s["tax"]["niit"]["tax"] if not s["is_nra"] else "N/A")
     if any(s["fdap_tax"] for s in scenarios):
         row("FDAP/NEC tax", lambda s: s["fdap_tax"] if s["is_nra"] else "N/A")
-    row("TOTAL TAX", lambda s: s["total_tax"])
+    row("Federal total", lambda s: s["federal_tax"])
+
+    if any(s["state_tax_amount"] for s in scenarios):
+        print("\nSTATE TAX")
+        row("State", lambda s: s["state_code"].upper() if s["state_code"] else "N/A")
+        row("State tax", lambda s: s["state_tax_amount"])
+        if any(s.get("state_tax", {}).get("local_tax", 0) for s in scenarios):
+            row("Local tax", lambda s: s["state_tax"]["local_tax"] if s.get("state_tax") else 0)
 
     print(f"\n{'-' * (30 + col_width * len(scenarios))}")
-    row("Withholding", lambda s: s["withholding"])
+    row("TOTAL TAX", lambda s: s["total_tax"])
+    row("Federal withheld", lambda s: s["withholding"])
+    if any(s["state_withholding"] for s in scenarios):
+        row("State withheld", lambda s: s["state_withholding"])
+    row("Total withheld", lambda s: s["total_withholding"])
 
     line = f"  {'RESULT':<28s}"
     for s in scenarios:
