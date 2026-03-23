@@ -1,0 +1,56 @@
+{
+  "description": "Example: Compare MFJ vs MFS for a married couple in California",
+  "scenarios": [
+    {
+      "name": "MFJ",
+      "status": "mfj",
+      "wages": 250000,
+      "interest": 500,
+      "dividends": 1000,
+      "qualified_dividends": 800,
+      "short_term_gains": 2000,
+      "state_income_tax": 15000,
+      "property_tax": 8000,
+      "mortgage_interest": 25000,
+      "loan_balance": 500000,
+      "loan_origination_date": "2023-06-01",
+      "medicare_wages": 250000,
+      "withholding": 45000,
+      "year": 2025
+    },
+    {
+      "name": "MFS (Filer 1)",
+      "status": "mfs",
+      "wages": 150000,
+      "interest": 300,
+      "dividends": 600,
+      "qualified_dividends": 500,
+      "short_term_gains": 1200,
+      "state_income_tax": 9000,
+      "property_tax": 4000,
+      "mortgage_interest": 12500,
+      "loan_balance": 500000,
+      "loan_origination_date": "2023-06-01",
+      "medicare_wages": 150000,
+      "withholding": 28000,
+      "year": 2025
+    },
+    {
+      "name": "MFS (Filer 2)",
+      "status": "mfs",
+      "wages": 100000,
+      "interest": 200,
+      "dividends": 400,
+      "qualified_dividends": 300,
+      "short_term_gains": 800,
+      "state_income_tax": 6000,
+      "property_tax": 4000,
+      "mortgage_interest": 12500,
+      "loan_balance": 500000,
+      "loan_origination_date": "2023-06-01",
+      "medicare_wages": 100000,
+      "withholding": 17000,
+      "year": 2025
+    }
+  ]
+}
