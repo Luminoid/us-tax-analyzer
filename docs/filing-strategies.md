@@ -40,7 +40,7 @@ MFJ is better in most cases. Consider MFS when:
 | Community property state complications | May simplify allocation |
 | One spouse is NRA without §6013(g) election | Can't file MFJ without election |
 
-**MFS penalties**: Lower SALT cap ($20K vs $40K), some credits disallowed, lower income phase-out thresholds.
+**MFS penalties**: Lower SALT cap ($20K vs $40K), lower SALT floor ($5K vs $10K), some credits disallowed, lower income phase-out thresholds.
 
 ## NRA vs RA (§6013(g)) Decision
 
@@ -61,15 +61,16 @@ For NRAs married to another NRA or RA, the §6013(g) election trades treaty bene
 
 ## Standard vs Itemized Deduction
 
-### 2025 Standard Deduction
+### 2025 Standard Deduction (post-OBBB)
 
 | Status | Amount |
 |--------|--------|
-| Single | $15,000 |
-| MFJ | $30,000 |
-| MFS | $15,000 |
-| HOH | $22,500 |
-| Additional (65+ or blind) | +$1,600 single / +$1,300 married |
+| Single | $15,750 |
+| MFJ | $31,500 |
+| MFS | $15,750 |
+| HOH | $23,625 |
+| Additional (65+ or blind) | +$2,000 single / +$1,600 married |
+| OBBB Senior Bonus (65+) | +$6,000 single / +$12,000 joint (phases out above $75K/$150K AGI) |
 
 ### When to Itemize
 

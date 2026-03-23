@@ -2,6 +2,59 @@
 
 Analyze US federal and state tax returns. Compare filing scenarios, review prepared returns for errors, and recommend the optimal filing strategy.
 
+## Prerequisites
+
+### PDF Reading
+
+Tax documents are typically PDFs. Claude Code can read PDFs natively in most cases. If the built-in PDF reader fails, `pdftotext` (from `poppler`) is a recommended fallback:
+
+```bash
+# macOS
+brew install poppler
+
+# Ubuntu/Debian
+sudo apt-get install poppler-utils
+
+# Verify
+pdftotext -v
+```
+
+When Claude Code's built-in PDF reader fails (usually because `pdftoppm` is not found), fall back to:
+
+```bash
+pdftotext "/path/to/document.pdf" -
+```
+
+### Reading Tax Documents from a Folder
+
+When the user provides a folder path:
+
+1. List all files: `ls <folder>/`
+2. For each PDF, try Claude Code's `Read` tool first (supports native PDF reading)
+3. If `Read` fails (e.g., `pdftoppm` not found), fall back to `pdftotext` via Bash:
+   ```bash
+   pdftotext "<folder>/W2.pdf" - 2>&1 | head -200
+   ```
+4. For multi-page PDFs (1099 consolidated forms), extract all pages:
+   ```bash
+   pdftotext "<folder>/1099.pdf" -
+   ```
+5. **W-2 PDFs are notoriously hard to parse** — they often have 4-up layouts (Federal/State/Local/Employee copies) where text extraction jumbles fields. Always:
+   - Cross-reference extracted values against the user's stated numbers
+   - Ask the user to confirm ambiguous values (especially boxes 3-6 for SS/Medicare)
+   - Check that box 1 + box 12 codes (D/E/AA/DD) make sense
+
+### Web Search for Latest Tax Rules
+
+Tax laws change frequently. Before calculating, search the web for the current year's:
+- Federal tax brackets (may have changed mid-year, e.g., OBBB retroactive changes)
+- Standard deduction amounts
+- SALT cap and phase-down thresholds
+- Capital gains brackets
+- Credit amounts and phase-outs
+
+Use `WebSearch` with queries like: `"2025 federal tax brackets OBBB"`, `"2025 SALT cap phase-down"`, `"2025 standard deduction amounts"`.
+
 ## Phase 1: Gather Information
 
 Ask the user these questions. Skip sections that don't apply.

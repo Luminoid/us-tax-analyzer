@@ -4,7 +4,7 @@
 
 ### SALT — State and Local Taxes
 
-**2025 Cap**: $40,000 MFJ / $20,000 MFS (phase-down for high AGI, floor $10,000)
+**2025 Cap (OBBB)**: $40,000 MFJ / $20,000 MFS (phase-down for high AGI, floor $10,000 / $5,000 MFS)
 
 | Tax Type | Deductible? |
 |----------|-------------|
@@ -16,7 +16,7 @@
 | DMV fees (non-VLF portion) | No |
 | State sales tax (alternative to income tax) | Yes |
 
-**Phase-down (2025)**: If AGI exceeds $500,000 ($250,000 MFS), the cap reduces by 30 cents per dollar over the threshold, but not below $10,000.
+**Phase-down (2025)**: If MAGI exceeds $500,000 ($250,000 MFS), the cap reduces by 30 cents per dollar over the threshold, but not below $10,000 ($5,000 MFS). Cap fully phases down at $600,000 ($300,000 MFS). Thresholds increase 1% annually through 2029.
 
 **NRA note**: SALT is deductible on 1040-NR Schedule A, but with the same cap.
 
@@ -70,15 +70,16 @@ These reduce AGI regardless of whether you itemize:
 | Self-employed health insurance | Premiums paid | Only for self-employed |
 | Educator expenses | $300 | K-12 teachers only |
 
-## Standard Deduction (2025)
+## Standard Deduction (2025, post-OBBB)
 
 | Status | Amount |
 |--------|--------|
-| Single | $15,000 |
-| MFJ | $30,000 |
-| MFS | $15,000 |
-| HOH | $22,500 |
-| Additional (65+ or blind) | +$1,600 single / +$1,300 married |
+| Single | $15,750 |
+| MFJ | $31,500 |
+| MFS | $15,750 |
+| HOH | $23,625 |
+| Additional (65+ or blind) | +$2,000 single / +$1,600 married |
+| OBBB Senior Bonus (65+) | +$6,000 single / +$12,000 joint (phases out above $75K/$150K AGI) |
 
 **Not available to**: NRAs on 1040-NR (except students from India under treaty), MFS filers if spouse itemizes.
 

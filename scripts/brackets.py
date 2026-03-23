@@ -1,78 +1,87 @@
 """
 Federal tax bracket calculations.
 
+All 2025 figures reflect the One Big Beautiful Bill Act (OBBB), signed July 4, 2025,
+which retroactively changed brackets, standard deductions, and capital gains thresholds
+for tax year 2025.
+
+Sources:
+- Tax Foundation: https://taxfoundation.org/data/all/federal/2025-tax-brackets/
+- Bradford Tax Institute: https://bradfordtaxinstitute.com/Free_Resources/2025-Capital-Gains-Rates.aspx
+- IRS: https://www.irs.gov/filing/federal-income-tax-rates-and-brackets
+
 Usage:
-    python3 brackets.py --income 257442 --status mfs --year 2025
-    python3 brackets.py --income 337629 --status mfj --year 2025 --qualified-dividends 652
+    python3 brackets.py --income 150000 --status mfj --year 2025
+    python3 brackets.py --income 250000 --status mfs --year 2025 --qualified-dividends 500
 """
 
 import argparse
 import json
 import sys
 
-# 2025 Federal Tax Brackets
+# 2025 Federal Tax Brackets (post-OBBB)
 BRACKETS = {
     2025: {
         "single": [
             (11_925, 0.10),
-            (48_475, 0.12),
-            (103_350, 0.22),
-            (197_300, 0.24),
-            (250_525, 0.32),
+            (48_250, 0.12),
+            (115_700, 0.22),
+            (209_425, 0.24),
+            (523_050, 0.32),
             (626_350, 0.35),
             (float("inf"), 0.37),
         ],
         "mfj": [
             (23_850, 0.10),
-            (96_950, 0.12),
-            (206_700, 0.22),
-            (394_600, 0.24),
-            (501_050, 0.32),
+            (96_500, 0.12),
+            (231_400, 0.22),
+            (418_850, 0.24),
+            (628_300, 0.32),
             (751_600, 0.35),
             (float("inf"), 0.37),
         ],
         "mfs": [
             (11_925, 0.10),
-            (48_475, 0.12),
-            (103_350, 0.22),
-            (197_300, 0.24),
-            (250_525, 0.32),
+            (48_250, 0.12),
+            (115_700, 0.22),
+            (209_425, 0.24),
+            (314_150, 0.32),
             (375_800, 0.35),
             (float("inf"), 0.37),
         ],
         "hoh": [
             (17_000, 0.10),
-            (64_850, 0.12),
-            (103_350, 0.22),
-            (197_300, 0.24),
-            (250_500, 0.32),
-            (626_350, 0.35),
+            (64_900, 0.12),
+            (103_050, 0.22),
+            (196_050, 0.24),
+            (518_900, 0.32),
+            (625_850, 0.35),
             (float("inf"), 0.37),
         ],
     },
 }
 
-# 2025 Qualified Dividends / Long-Term Capital Gains Brackets
+# 2025 Qualified Dividends / Long-Term Capital Gains Brackets (post-OBBB)
 QD_BRACKETS = {
     2025: {
-        "single": [(47_025, 0.00), (518_900, 0.15), (float("inf"), 0.20)],
-        "mfj": [(94_050, 0.00), (583_750, 0.15), (float("inf"), 0.20)],
-        "mfs": [(47_025, 0.00), (291_850, 0.15), (float("inf"), 0.20)],
-        "hoh": [(63_000, 0.00), (551_350, 0.15), (float("inf"), 0.20)],
+        "single": [(48_350, 0.00), (533_400, 0.15), (float("inf"), 0.20)],
+        "mfj": [(96_700, 0.00), (600_050, 0.15), (float("inf"), 0.20)],
+        "mfs": [(48_350, 0.00), (300_000, 0.15), (float("inf"), 0.20)],
+        "hoh": [(64_750, 0.00), (566_700, 0.15), (float("inf"), 0.20)],
     },
 }
 
-# Standard Deductions
+# Standard Deductions (post-OBBB)
 STANDARD_DEDUCTION = {
     2025: {
-        "single": 15_000,
-        "mfj": 30_000,
-        "mfs": 15_000,
-        "hoh": 22_500,
+        "single": 15_750,
+        "mfj": 31_500,
+        "mfs": 15_750,
+        "hoh": 23_625,
     },
 }
 
-# Additional Medicare Tax Thresholds
+# Additional Medicare Tax Thresholds (not indexed for inflation)
 ADDITIONAL_MEDICARE_THRESHOLD = {
     "single": 200_000,
     "mfj": 250_000,
@@ -80,7 +89,7 @@ ADDITIONAL_MEDICARE_THRESHOLD = {
     "hoh": 200_000,
 }
 
-# NIIT Threshold
+# NIIT Threshold (not indexed for inflation)
 NIIT_THRESHOLD = {
     "single": 200_000,
     "mfj": 250_000,
@@ -121,12 +130,10 @@ def calculate_bracket_tax(taxable_income, status, year=2025):
         prev_limit = limit
 
     marginal_rate = 0.0
-    prev = 0
     for limit, rate in brackets:
         if taxable_income <= limit:
             marginal_rate = rate
             break
-        prev = limit
 
     return {
         "taxable_income": round(taxable_income),
@@ -183,7 +190,7 @@ def calculate_additional_medicare_tax(medicare_wages, status):
 def calculate_niit(net_investment_income, magi, status):
     """Calculate Net Investment Income Tax (3.8%).
 
-    NRAs are NOT subject to NIIT.
+    NRAs are NOT subject to NIIT. Thresholds are not indexed for inflation.
 
     Args:
         net_investment_income: Sum of interest, dividends, capital gains, etc.

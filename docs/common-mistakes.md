@@ -16,8 +16,9 @@ Errors frequently found in self-prepared and accountant-prepared returns.
 ## Deduction Errors
 
 ### 3. Using Outdated SALT Cap
-- 2025 SALT cap is $40,000 MFJ / $20,000 MFS (with phase-down for high AGI)
-- Some software or accountants may still use the old $10,000 / $5,000 cap
+- 2025 SALT cap is $40,000 MFJ / $20,000 MFS (OBBB, signed July 4, 2025)
+- Phase-down: 30% of MAGI over $500K ($250K MFS), floor $10K ($5K MFS)
+- Some software or accountants may still use the old $10,000 / $5,000 cap, or use OBBB SALT cap but pre-OBBB brackets (partial update)
 
 ### 4. Missing Deductible Taxes in SALT
 Common items left out of the SALT deduction:

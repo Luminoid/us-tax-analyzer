@@ -10,24 +10,55 @@ A Claude Code skill + Python toolkit for US federal and state income tax analysi
 4. **Compares scenarios** side-by-side with a clear recommendation
 5. **Reviews prepared returns** — flags errors, missing deductions, and suboptimal strategies
 
-## Quick Start
+## Prerequisites
 
-### As a Claude Code Skill
+- **Python 3.10+** (no external dependencies — stdlib only)
+- **poppler** (recommended — fallback for reading tax document PDFs if Claude Code's native PDF reader fails)
 
 ```bash
+# macOS
+brew install poppler
+
+# Ubuntu/Debian
+sudo apt-get install poppler-utils
+```
+
+## Setup
+
+### Option 1: As a Claude Code Skill (Recommended)
+
+Copy the skill into any project where you want tax analysis:
+
+```bash
+# Clone the repo
+git clone https://github.com/anthropics/us-tax-advisor.git
+
+# Copy skill to your project
+mkdir -p your-project/.claude/skills/
 cp us-tax-advisor/skills/tax-analysis.md your-project/.claude/skills/
 ```
 
-Then invoke: `/tax-analysis`
+Then in Claude Code, invoke: `/tax-analysis`
 
-### Python Scripts (Standalone)
+The skill will:
+1. Ask you questions about your filing situation
+2. Read your tax documents from a folder you specify
+3. Search the web for the latest tax rules
+4. Run the Python scripts to calculate and compare scenarios
+5. Present a recommendation
+
+### Option 2: Python Scripts (Standalone)
 
 ```bash
+# Clone and use directly
+git clone https://github.com/anthropics/us-tax-advisor.git
+cd us-tax-advisor/scripts
+
 # Calculate federal tax
-python3 scripts/brackets.py --income 150000 --status mfj --year 2025
+python3 brackets.py --income 150000 --status mfj --year 2025
 
 # Calculate deductions
-python3 scripts/deductions.py --state-tax 12000 --property-tax 8000 \
+python3 deductions.py --state-tax 12000 --property-tax 8000 \
     --mortgage-interest 25000 --status mfj --agi 200000 --filing-type ra --year 2025
 
 # Compare scenarios from a config file
@@ -70,7 +101,7 @@ us-tax-advisor/
 
 - **Federal income tax** at 2025 graduated rates (10%–37%)
 - **Qualified dividends / LTCG** at preferential rates (0%/15%/20%)
-- **SALT deduction** with 2025 cap ($40,000 MFJ / $20,000 MFS, phase-down for high AGI)
+- **SALT deduction** with 2025 OBBB cap ($40,000 MFJ / $20,000 MFS, phase-down for high AGI, floor $10K/$5K MFS)
 - **Mortgage interest** deduction with TCJA loan limits
 - **Itemized vs standard** deduction comparison
 - **Additional Medicare Tax** (0.9% on wages over threshold)

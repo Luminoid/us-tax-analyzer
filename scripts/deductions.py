@@ -9,7 +9,10 @@ Usage:
 import argparse
 import json
 
-# 2025 SALT Cap (raised by 2025 tax legislation)
+# 2025 SALT Cap (OBBB, signed July 4, 2025 — retroactive to 2025)
+# Source: https://dhjj.com/salt-deduction-2025-phaseouts/
+# Cap phases down by 30 cents per dollar of MAGI over threshold.
+# MFS floor is $5,000 (not $10,000). Thresholds increase 1%/year through 2029.
 SALT_CAP = {
     2025: {
         "base": {
@@ -27,7 +30,12 @@ SALT_CAP = {
             },
             "rate": 0.30,
         },
-        "floor": 10_000,
+        "floor": {
+            "single": 10_000,
+            "mfj": 10_000,
+            "mfs": 5_000,
+            "hoh": 10_000,
+        },
     },
 }
 
@@ -49,13 +57,14 @@ MORTGAGE_LIMITS = {
     },
 }
 
-# Standard Deductions
+# Standard Deductions (post-OBBB)
+# Source: https://www.nerdwallet.com/taxes/learn/standard-deduction
 STANDARD_DEDUCTION = {
     2025: {
-        "single": 15_000,
-        "mfj": 30_000,
-        "mfs": 15_000,
-        "hoh": 22_500,
+        "single": 15_750,
+        "mfj": 31_500,
+        "mfs": 15_750,
+        "hoh": 23_625,
     },
 }
 
@@ -63,8 +72,8 @@ STANDARD_DEDUCTION = {
 def calculate_salt_cap(total_salt, agi, status, year=2025):
     """Calculate the SALT deduction after applying the cap and phase-down.
 
-    2025 rules: $40,000 base ($20,000 MFS), reduced by 30% of AGI over threshold,
-    floor of $10,000.
+    2025 rules (OBBB): $40,000 base ($20,000 MFS), reduced by 30% of MAGI over
+    threshold, floor of $10,000 ($5,000 MFS).
 
     Args:
         total_salt: Total state/local taxes (income tax + property tax + car VLF + SDI).
@@ -79,7 +88,7 @@ def calculate_salt_cap(total_salt, agi, status, year=2025):
     base_cap = config["base"][status]
     threshold = config["phase_down"]["threshold"][status]
     phase_rate = config["phase_down"]["rate"]
-    floor = config["floor"]
+    floor = config["floor"][status]
 
     if agi <= threshold:
         effective_cap = base_cap
