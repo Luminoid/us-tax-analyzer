@@ -14,9 +14,6 @@ brew install poppler
 
 # Ubuntu/Debian
 sudo apt-get install poppler-utils
-
-# Verify
-pdftotext -v
 ```
 
 When Claude Code's built-in PDF reader fails (usually because `pdftoppm` is not found), fall back to:
@@ -61,7 +58,7 @@ Ask these upfront (cannot be extracted from documents):
    ```bash
    pdftotext "<folder>/1099.pdf" -
    ```
-5. **W-2 PDFs are notoriously hard to parse** — they often have 4-up layouts (Federal/State/Local/Employee copies) where text extraction jumbles fields. Always:
+5. **W-2 PDFs are notoriously hard to parse** -- they often have 4-up layouts (Federal/State/Local/Employee copies) where text extraction jumbles fields. Always:
    - Cross-reference extracted values against each other for consistency
    - Flag ambiguous values (especially boxes 3-6 for SS/Medicare)
    - Check that box 1 + box 12 codes (D/E/AA/DD) make sense
@@ -146,18 +143,105 @@ Skip questions where the answer is clearly "no" based on the documents (e.g., do
 
 ## Phase 2: Determine Filing Options
 
-Based on the gathered info, identify which filing scenarios are available:
+Based on the gathered info, identify which filing scenarios are available.
 
-### For US Citizens / Green Card Holders
-- Single, MFJ, MFS, HOH -- based on marital status and dependents
-- Compare MFJ vs MFS if married (MFJ usually wins, but not always)
+### Filing Status Rules
 
-### For Visa Holders
-- Determine residency via Substantial Presence Test (SPT)
-- Check exempt individual rules (F-1/J-1 first 5 calendar years)
-- If NRA: 1040-NR options (Single or MFS)
-- If NRA but married: evaluate section 6013(g) election (elect RA, requires MFJ)
-- Compare NRA MFS vs RA MFJ -- mortgage interest is the key driver
+| Status | Who Qualifies | When It's Best |
+|--------|---------------|---------------|
+| **Single** | Unmarried or legally separated | Default for unmarried filers |
+| **MFJ** | Married as of Dec 31 | Usually best -- wider brackets, higher deduction |
+| **MFS** | Married, filing individually | High medical expenses, student loans (IBR), liability concerns |
+| **HOH** | Unmarried with qualifying dependent | Better brackets and higher standard deduction than Single |
+| **QSS** | Widowed within 2 years with dependent | Uses MFJ brackets and deduction |
+
+### MFJ vs MFS Decision
+
+MFJ is better in most cases. Consider MFS when:
+- One spouse has high medical expenses (7.5% AGI floor is lower with individual AGI)
+- Income-driven student loan repayment (payments based on individual AGI)
+- One spouse has tax debt or liability (protect the other from collections)
+- One spouse is NRA without section 6013(g) election
+
+**MFS penalties**: Lower SALT cap ($20K vs $40K), lower SALT floor ($5K vs $10K), some credits disallowed, lower income phase-out thresholds.
+
+### Visa Holders: Residency Determination
+
+Determine tax residency via the Substantial Presence Test (SPT):
+
+```
+Current year days + (Prior year days / 3) + (2 years ago days / 6) >= 183 -> Resident Alien
+```
+
+**Exempt individuals** (F-1/J-1 students in first 5 calendar years) exclude their days from the count.
+
+| SPT Result | Filing Options |
+|------------|---------------|
+| Resident Alien | Same as US citizens (1040) |
+| NRA | 1040-NR -- Single or MFS only |
+| NRA, married | Can elect RA under section 6013(g) -> must file MFJ |
+
+### NRA vs RA (section 6013(g)) Decision
+
+For NRAs married to another NRA or RA:
+
+| Feature | NRA (1040-NR) | RA via 6013(g) (1040 MFJ) |
+|---------|---------------|----------------------------|
+| Mortgage interest deduction | Not available | Available |
+| Standard deduction | Not available | Available |
+| Treaty exemptions | Available | Not available |
+| Investment income (FDAP) | Flat rate or treaty rate | Graduated rates |
+| NIIT (3.8%) | Exempt | Subject to |
+| Education credits | Not available | Available (if not phased out) |
+| Worldwide income taxable | No (US-source only) | Yes |
+
+**Rule of thumb**: If you have a mortgage, RA MFJ almost always wins -- the mortgage interest deduction typically exceeds treaty benefits.
+
+### Deduction Reference
+
+#### SALT -- State and Local Taxes
+
+**2025 Cap (OBBB)**: $40,000 MFJ / $20,000 MFS. Phase-down: 30% of MAGI over $500K ($250K MFS), floor $10K ($5K MFS).
+
+Deductible SALT items:
+- State income tax (W-2 box 17)
+- Local income tax / SDI / CASDI (W-2 box 19)
+- Property tax (real estate)
+- Vehicle license fee (VLF portion only, not DMV fees)
+- State sales tax (alternative to income tax)
+
+#### Mortgage Interest
+
+| Loan Origination | Limit (MFJ/Single/HOH) | Limit (MFS) |
+|------------------|------------------------|-------------|
+| On or before Dec 15, 2017 | $1,000,000 | $500,000 |
+| After Dec 15, 2017 | $750,000 | $375,000 |
+
+Not available on 1040-NR. If loan exceeds limit, deduction is proportionally reduced. Multiple 1098 forms (loan transferred mid-year) -- combine all.
+
+#### Standard Deduction (2025, post-OBBB)
+
+| Status | Amount |
+|--------|--------|
+| Single | $15,750 |
+| MFJ | $31,500 |
+| MFS | $15,750 |
+| HOH | $23,625 |
+| Additional (65+ or blind) | +$2,000 single / +$1,600 married |
+
+Not available to: NRAs on 1040-NR, MFS filers if spouse itemizes.
+
+**Itemize when**: mortgage interest > ~$15K (single) or ~$20K (MFJ), high SALT state (CA, NY, NJ), large charitable contributions, or significant medical expenses (>7.5% AGI).
+
+#### Above-the-Line Deductions (reduce AGI regardless of itemizing)
+
+| Deduction | Limit |
+|-----------|-------|
+| Traditional IRA | $7,000 ($8,000 if 50+) |
+| Student loan interest | $2,500 (phase-out at $80K-$95K single) |
+| HSA contributions | $4,300 single / $8,550 family |
+| Self-employment tax | 50% of SE tax |
+| Educator expenses | $300 (K-12 teachers) |
 
 ### Key Decision Points
 - Homeowner with mortgage -> itemize likely wins; if NRA, RA election may be better
@@ -210,15 +294,30 @@ Identify the winning scenario and explain why -- break down which factors drive 
 If the user provides accountant-prepared returns, compare against calculated values.
 
 ### Common Errors to Check
-1. **Suboptimal filing status** -- didn't evaluate all available options
-2. **Wrong SALT cap** -- using outdated limits
-3. **Missing deductions** -- mortgage interest, property tax, SDI, vehicle fees
-4. **Incorrect withholding data** -- W-2 values don't match what's on the return
-5. **Income classification errors** -- NRA investment income as ECI instead of FDAP
-6. **Phantom tax data** -- Form 8959 with incorrect Medicare wages
-7. **Missing credits** -- education, child tax, retirement savings
-8. **Prior-year amounts wrong** -- state refunds, carryforwards
-9. **Calculation errors** -- verify tax computation against brackets
+
+**Filing status errors:**
+1. **Not evaluating all options** -- married couples defaulting to MFJ without checking MFS; NRAs not evaluating RA MFJ election; single filers who qualify for HOH
+2. **Wrong NRA status** -- NRAs cannot file MFJ on 1040-NR without section 6013(g) election
+
+**Deduction errors:**
+3. **Outdated SALT cap** -- 2025 is $40K MFJ / $20K MFS (OBBB), not the old $10K/$5K
+4. **Missing SALT items** -- SDI/CASDI from W-2 box 19, vehicle license fee, local income taxes, property tax paid directly (not through escrow)
+5. **Mortgage interest missed** -- two 1098s from loan transfer mid-year; NRA returns should exclude but accountant should have evaluated RA election; loan over $750K without pro-rating
+6. **Wrong deduction type** -- not comparing itemized vs standard totals; forgetting MFS requires both spouses to use same method
+
+**Income errors:**
+7. **Missing income** -- prior-year state refund (taxable if itemized), bank interest, crypto, 1099-NEC/K side income
+8. **NRA investment classification** -- FDAP (flat/treaty rate on Schedule NEC) vs ECI (graduated rates) -- accountants sometimes mix these
+9. **Qualified dividends at ordinary rates** -- 1099-DIV box 1b should get 0%/15%/20%, not ordinary rates
+
+**Withholding and payment errors:**
+10. **W-2 data entry errors** -- transposed box 1 vs box 16, wrong Medicare wages (box 5), missing W-2 from short-term employer
+11. **Missing withholding credits** -- 1042-S withholding not claimed (line 25g on 1040-NR), estimated payments not entered, excess SS tax credit for multiple employers
+12. **Additional Medicare Tax errors** -- applied to wrong wage amount (should be box 5, not box 1), wrong threshold for status ($250K MFJ, $200K single, $125K MFS), Form 8959 filed when wages below threshold
+
+**Credit errors:**
+13. **Education credits** -- American Opportunity ($2,500, partially refundable) vs Lifetime Learning ($2,000); income phase-outs not checked; NRAs cannot claim
+14. **Child tax credit** -- $2,000 per child under 17; phase-out at $200K single / $400K MFJ
 
 ### For Each Issue Found
 - What the return shows vs what it should be
@@ -228,7 +327,7 @@ If the user provides accountant-prepared returns, compare against calculated val
 ## Phase 6: Recommendation
 
 1. Which filing strategy to use and why
-2. Estimated total tax and refund/amount owed
+2. Estimated total tax (federal + state) and refund/amount owed
 3. Dollar savings vs alternatives
 4. Action items (file, amend, contact accountant)
 5. Areas where professional advice is recommended

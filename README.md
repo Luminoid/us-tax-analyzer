@@ -74,20 +74,12 @@ python3 compare.py --config ../examples/scenario-config.json
 ```
 us-tax-analyzer/
 ├── skills/
-│   └── tax-analyzer.md          # Claude Code skill -- document-first analysis flow
+│   └── tax-analyzer.md          # Claude Code skill (self-contained analysis flow + reference)
 ├── scripts/
 │   ├── federal.py               # Federal tax brackets, QD/LTCG rates, Medicare, NIIT
 │   ├── state.py                 # State income tax (37 states + DC + NYC local)
 │   ├── deductions.py            # SALT cap, mortgage limits, itemized vs standard
 │   └── compare.py               # Multi-scenario comparison (federal + state)
-├── docs/
-│   ├── filing-strategies.md     # Filing status options and when each wins
-│   ├── deduction-guide.md       # Deductions by type and eligibility
-│   ├── common-mistakes.md       # Frequent errors and how to catch them
-│   └── state-taxes.md           # State-specific rules
-├── templates/
-│   ├── comparison-worksheet.md
-│   └── document-checklist.md
 └── examples/
     └── scenario-config.json     # Example config for compare.py
 ```
