@@ -1,6 +1,13 @@
 """
 Multi-scenario tax comparison.
 
+Supports:
+- Individual scenarios (single filer)
+- Combined scenarios (e.g., two NRA spouses filing separately, compared against MFJ)
+- State itemized deductions separate from federal (CA allows mortgage/property tax even for NRAs)
+- State treaty addback (CA doesn't honor most federal treaty exemptions)
+- State income adjustments (e.g., exclude own-state refund from state taxable income)
+
 Usage:
     python3 compare.py --config scenarios.json
     python3 compare.py --config scenarios.json --json
@@ -42,6 +49,9 @@ def build_scenario(
     state_code="",
     nyc_resident=False,
     year=2025,
+    state_itemized_deductions=None,
+    state_income_adjustment=0,
+    state_treaty_addback=0,
     **kwargs,
 ):
     """Build a complete tax scenario with all calculations.
@@ -51,7 +61,7 @@ def build_scenario(
         status: Filing status ('single', 'mfj', 'mfs', 'hoh').
         is_nra: Nonresident alien flag.
         wages: W-2 wages (box 1).
-        treaty_exemption: Treaty-exempt income amount.
+        treaty_exemption: Treaty-exempt income amount (federal only).
         interest: Interest income.
         dividends: Ordinary dividends (total).
         qualified_dividends: Qualified portion of dividends.
@@ -69,7 +79,20 @@ def build_scenario(
         medicare_wages: W-2 box 5 (for Additional Medicare Tax).
         fdap_tax: NRA flat tax on FDAP income (Schedule NEC total).
         withholding: Total federal tax withheld.
+        state_withholding: State tax withheld.
+        state_code: Two-letter state code (e.g., 'CA').
+        nyc_resident: NYC local tax flag.
         year: Tax year.
+        state_itemized_deductions: Override state deductions (dict with
+            mortgage_interest, property_tax, car_vlf, other). If provided,
+            uses these instead of state standard deduction. Useful when
+            state allows deductions that federal NRA rules disallow (e.g.,
+            CA allows mortgage interest for federal NRAs).
+        state_income_adjustment: Amount to subtract from state AGI (e.g.,
+            own-state refund that's taxable federally but not on state return).
+        state_treaty_addback: Amount to add back to state AGI when state
+            doesn't honor federal treaty exemptions (e.g., CA doesn't honor
+            Article 20 $5,000 exemption).
 
     Returns:
         dict with complete scenario results.
@@ -119,9 +142,24 @@ def build_scenario(
     # State tax calculation
     state_result = None
     state_tax_amount = 0
+    state_taxable = 0
     if state_code:
-        state_std = get_state_standard_deduction(state_code, status)
-        state_taxable = max(0, agi - state_std) if state_std > 0 else max(0, agi)
+        state_agi = agi + state_treaty_addback - state_income_adjustment
+
+        if state_itemized_deductions is not None:
+            sid = state_itemized_deductions
+            state_itemized_total = (
+                sid.get("mortgage_interest", 0)
+                + sid.get("property_tax", 0)
+                + sid.get("car_vlf", 0)
+                + sid.get("other", 0)
+            )
+            state_std = get_state_standard_deduction(state_code, status)
+            state_deduction = max(state_itemized_total, state_std)
+        else:
+            state_deduction = get_state_standard_deduction(state_code, status)
+
+        state_taxable = max(0, state_agi - state_deduction)
         state_result = calculate_state_tax(
             state=state_code,
             taxable_income=state_taxable,
@@ -159,7 +197,10 @@ def build_scenario(
         "fdap_tax": round(fdap_tax),
         "federal_tax": round(federal_tax),
         "state_tax": state_result,
+        "state_taxable": round(state_taxable),
         "state_tax_amount": round(state_tax_amount),
+        "state_treaty_addback": round(state_treaty_addback),
+        "state_income_adjustment": round(state_income_adjustment),
         "total_tax": round(total_tax),
         "withholding": round(withholding),
         "state_withholding": round(state_withholding),
@@ -169,12 +210,96 @@ def build_scenario(
     }
 
 
-def compare_scenarios(scenarios):
-    """Compare multiple tax scenarios side by side."""
-    best = min(scenarios, key=lambda s: s["total_tax"])
-    worst = max(scenarios, key=lambda s: s["total_tax"])
+def _combine_scenarios(scenarios, combined_name):
+    """Combine multiple scenarios into a single aggregated result.
+
+    Used to compare "Spouse A NRA + Spouse B NRA" against "MFJ" as a single
+    line item. Sums all tax, withholding, and result fields.
+
+    Args:
+        scenarios: List of scenario result dicts to combine.
+        combined_name: Display name for the combined result.
+
+    Returns:
+        dict with combined totals (subset of fields for comparison).
+    """
+    combined = {
+        "name": combined_name,
+        "is_combined": True,
+        "components": [s["name"] for s in scenarios],
+        "status": " + ".join(s["status"].upper() for s in scenarios),
+        "is_nra": any(s["is_nra"] for s in scenarios),
+        "year": scenarios[0]["year"],
+        "state_code": scenarios[0].get("state_code", ""),
+        "income": {
+            "wages": sum(s["income"]["wages"] for s in scenarios),
+            "treaty_exemption": sum(s["income"]["treaty_exemption"] for s in scenarios),
+            "interest": sum(s["income"]["interest"] for s in scenarios),
+            "dividends": sum(s["income"]["dividends"] for s in scenarios),
+            "qualified_dividends": sum(s["income"]["qualified_dividends"] for s in scenarios),
+            "short_term_gains": sum(s["income"]["short_term_gains"] for s in scenarios),
+            "long_term_gains": sum(s["income"]["long_term_gains"] for s in scenarios),
+            "other_income": sum(s["income"]["other_income"] for s in scenarios),
+            "agi": sum(s["income"]["agi"] for s in scenarios),
+        },
+        "deductions": {
+            "salt": {
+                "allowed_deduction": sum(
+                    s["deductions"]["salt"]["allowed_deduction"] for s in scenarios
+                ),
+            },
+            "mortgage": {
+                "deductible": sum(
+                    s["deductions"]["mortgage"]["deductible"] for s in scenarios
+                ),
+            },
+        },
+        "deduction_comparison": {
+            "recommended": "COMBINED",
+            "deduction": sum(s["deduction_comparison"]["deduction"] for s in scenarios),
+        },
+        "taxable_income": sum(s["taxable_income"] for s in scenarios),
+        "tax": {
+            "ordinary_tax": {
+                "tax": sum(s["tax"]["ordinary_tax"]["tax"] for s in scenarios),
+            },
+            "qd_tax": {
+                "tax": sum(s["tax"]["qd_tax"]["tax"] for s in scenarios),
+            },
+            "additional_medicare": {
+                "tax": sum(s["tax"]["additional_medicare"]["tax"] for s in scenarios),
+            },
+            "niit": {
+                "tax": sum(s["tax"]["niit"]["tax"] for s in scenarios),
+            },
+        },
+        "fdap_tax": sum(s["fdap_tax"] for s in scenarios),
+        "federal_tax": sum(s["federal_tax"] for s in scenarios),
+        "state_tax": None,
+        "state_tax_amount": sum(s["state_tax_amount"] for s in scenarios),
+        "total_tax": sum(s["total_tax"] for s in scenarios),
+        "withholding": sum(s["withholding"] for s in scenarios),
+        "state_withholding": sum(s["state_withholding"] for s in scenarios),
+        "total_withholding": sum(s["total_withholding"] for s in scenarios),
+    }
+    combined["result"] = combined["total_withholding"] - combined["total_tax"]
+    combined["result_label"] = "REFUND" if combined["result"] >= 0 else "OWED"
+    return combined
+
+
+def compare_scenarios(display_scenarios):
+    """Compare multiple tax scenarios side by side.
+
+    Args:
+        display_scenarios: List of scenario dicts (individual or combined).
+
+    Returns:
+        dict with comparison results including best/worst/savings.
+    """
+    best = min(display_scenarios, key=lambda s: s["total_tax"])
+    worst = max(display_scenarios, key=lambda s: s["total_tax"])
     return {
-        "scenarios": scenarios,
+        "scenarios": display_scenarios,
         "best": {
             "name": best["name"],
             "total_tax": best["total_tax"],
@@ -245,17 +370,19 @@ def print_comparison(comparison):
     row("Income tax", lambda s: s["tax"]["ordinary_tax"]["tax"] + s["tax"]["qd_tax"]["tax"])
     if any(s["tax"]["additional_medicare"]["tax"] for s in scenarios):
         row("Addl Medicare", lambda s: s["tax"]["additional_medicare"]["tax"])
-    if any(not s["is_nra"] and s["tax"]["niit"]["tax"] for s in scenarios):
+    if any(not s.get("is_combined") and not s["is_nra"] and s["tax"]["niit"]["tax"] for s in scenarios):
+        row("NIIT", lambda s: s["tax"]["niit"]["tax"] if not s["is_nra"] or s.get("is_combined") else "N/A")
+    elif any(s.get("is_combined") or (not s["is_nra"] and s["tax"]["niit"]["tax"]) for s in scenarios):
         row("NIIT", lambda s: s["tax"]["niit"]["tax"] if not s["is_nra"] else "N/A")
     if any(s["fdap_tax"] for s in scenarios):
-        row("FDAP/NEC tax", lambda s: s["fdap_tax"] if s["is_nra"] else "N/A")
+        row("FDAP/NEC tax", lambda s: s["fdap_tax"] if s["fdap_tax"] else "N/A")
     row("Federal total", lambda s: s["federal_tax"])
 
     if any(s["state_tax_amount"] for s in scenarios):
         print("\nSTATE TAX")
-        row("State", lambda s: s["state_code"].upper() if s["state_code"] else "N/A")
+        row("State", lambda s: s["state_code"].upper() if s.get("state_code") else "N/A")
         row("State tax", lambda s: s["state_tax_amount"])
-        if any(s.get("state_tax", {}).get("local_tax", 0) for s in scenarios):
+        if any(s.get("state_tax") and s["state_tax"].get("local_tax", 0) for s in scenarios):
             row("Local tax", lambda s: s["state_tax"]["local_tax"] if s.get("state_tax") else 0)
 
     print(f"\n{'-' * (30 + col_width * len(scenarios))}")
@@ -286,8 +413,26 @@ def main():
     with open(args.config) as f:
         config = json.load(f)
 
-    scenarios = [build_scenario(**s) for s in config["scenarios"]]
-    comparison = compare_scenarios(scenarios)
+    # Build all individual scenarios
+    all_scenarios = [build_scenario(**s) for s in config["scenarios"]]
+
+    # Process combined groups and standalone scenarios for display
+    display_scenarios = []
+    combined_groups = config.get("combined", [])
+    grouped_names = set()
+    for group in combined_groups:
+        members = [s for s in all_scenarios if s["name"] in group["members"]]
+        if len(members) == len(group["members"]):
+            combined = _combine_scenarios(members, group["name"])
+            display_scenarios.append(combined)
+            grouped_names.update(group["members"])
+
+    # Add standalone scenarios (not part of any combined group)
+    for s in all_scenarios:
+        if s["name"] not in grouped_names:
+            display_scenarios.append(s)
+
+    comparison = compare_scenarios(display_scenarios)
 
     if args.json:
         print(json.dumps(comparison, indent=2, default=str))

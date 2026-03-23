@@ -18,6 +18,13 @@
       "withholding": 45000,
       "state_withholding": 15000,
       "state_code": "CA",
+      "state_income_adjustment": 0,
+      "state_itemized_deductions": {
+        "mortgage_interest": 25000,
+        "property_tax": 8000,
+        "car_vlf": 0,
+        "other": 0
+      },
       "year": 2025
     },
     {
@@ -37,6 +44,13 @@
       "withholding": 28000,
       "state_withholding": 9000,
       "state_code": "CA",
+      "state_income_adjustment": 0,
+      "state_itemized_deductions": {
+        "mortgage_interest": 12500,
+        "property_tax": 4000,
+        "car_vlf": 0,
+        "other": 0
+      },
       "year": 2025
     },
     {
@@ -56,7 +70,20 @@
       "withholding": 17000,
       "state_withholding": 6000,
       "state_code": "CA",
+      "state_income_adjustment": 0,
+      "state_itemized_deductions": {
+        "mortgage_interest": 12500,
+        "property_tax": 4000,
+        "car_vlf": 0,
+        "other": 0
+      },
       "year": 2025
+    }
+  ],
+  "combined": [
+    {
+      "name": "MFS Combined",
+      "members": ["MFS (Filer 1)", "MFS (Filer 2)"]
     }
   ]
 }

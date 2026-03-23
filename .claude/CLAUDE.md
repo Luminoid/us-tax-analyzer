@@ -13,6 +13,8 @@ General-purpose US tax analysis toolkit. Claude Code skill handles conversation 
   - `deductions.py` -- SALT cap, mortgage limits, itemized vs standard
   - `compare.py` -- Multi-scenario comparison (federal + state)
 - **Examples** (`examples/`): Sample JSON configs for compare.py
+  - `scenario-config.json` -- MFJ vs MFS with combined scenario
+  - `nra-vs-mfj-config.json` -- NRA separate vs 6013(g) MFJ with state adjustments
 
 ## Key Rules
 
@@ -23,6 +25,15 @@ General-purpose US tax analysis toolkit. Claude Code skill handles conversation 
 - When reading tax documents, extract numbers carefully -- PDF text extraction can jumble W-2 fields
 - Always present multiple scenarios side-by-side
 - Flag uncertainties rather than assuming
+
+## Scenario Config Features
+
+JSON configs for `compare.py` support:
+
+- **`state_itemized_deductions`**: Override state deductions with `{mortgage_interest, property_tax, car_vlf, other}`. Bypasses state standard deduction. Needed when state allows deductions that federal NRA rules disallow (e.g., CA allows mortgage interest for federal NRAs).
+- **`state_treaty_addback`**: Amount to add back to state AGI when state doesn't honor federal treaty exemptions (e.g., CA doesn't honor US-China Article 20 $5,000 exemption).
+- **`state_income_adjustment`**: Amount to subtract from state AGI (e.g., own-state refund that's taxable federally but not on state return).
+- **`combined`**: Top-level array of `{name, members}` groups. Combines member scenarios into a single aggregated row for comparison (e.g., "Spouse A NRA + Spouse B NRA" vs "MFJ").
 
 ## Script Conventions
 

@@ -1,0 +1,76 @@
+{
+  "description": "Example: NRA couple filing separately vs 6013(g) MFJ election. Demonstrates state_treaty_addback, state_income_adjustment, state_itemized_deductions, and combined scenarios.",
+  "scenarios": [
+    {
+      "name": "A1: Spouse 1 NRA",
+      "status": "single",
+      "is_nra": true,
+      "wages": 272337,
+      "treaty_exemption": 5000,
+      "other_income": 2426,
+      "state_income_tax": 24585,
+      "sdi": 1630,
+      "medicare_wages": 54666,
+      "fdap_tax": 70,
+      "withholding": 56584,
+      "state_withholding": 24585,
+      "state_code": "CA",
+      "state_treaty_addback": 5000,
+      "state_income_adjustment": 2426,
+      "state_itemized_deductions": {
+        "mortgage_interest": 37128,
+        "property_tax": 8031,
+        "car_vlf": 165,
+        "other": 0
+      }
+    },
+    {
+      "name": "A2: Spouse 2 NRA",
+      "status": "single",
+      "is_nra": true,
+      "wages": 134204,
+      "treaty_exemption": 5000,
+      "state_income_tax": 9391,
+      "sdi": 1610,
+      "fdap_tax": 20,
+      "withholding": 21168,
+      "state_withholding": 9391,
+      "state_code": "CA",
+      "state_treaty_addback": 5000
+    },
+    {
+      "name": "B: MFJ (6013g)",
+      "status": "mfj",
+      "wages": 406541,
+      "interest": 607,
+      "dividends": 658,
+      "qualified_dividends": 652,
+      "short_term_gains": 3399,
+      "other_income": 2426,
+      "state_income_tax": 33976,
+      "property_tax": 8031,
+      "car_vlf": 165,
+      "sdi": 3240,
+      "mortgage_interest": 37128,
+      "loan_balance": 516107,
+      "loan_origination_date": "2024-11-23",
+      "medicare_wages": 54666,
+      "withholding": 77752,
+      "state_withholding": 33976,
+      "state_code": "CA",
+      "state_income_adjustment": 2426,
+      "state_itemized_deductions": {
+        "mortgage_interest": 37128,
+        "property_tax": 8031,
+        "car_vlf": 165,
+        "other": 0
+      }
+    }
+  ],
+  "combined": [
+    {
+      "name": "A: NRA Separate",
+      "members": ["A1: Spouse 1 NRA", "A2: Spouse 2 NRA"]
+    }
+  ]
+}
